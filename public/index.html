@@ -668,19 +668,30 @@
     }
 
     // AUTH LIFECYCLE (ANTI-WHITE SCREEN HYBRID)
-    window.addEventListener('DOMContentLoaded', () => {
-      setTimeout(() => {
-        const splash = document.getElementById('splashScreen');
-        if (splash) splash.remove();
+        window.addEventListener('DOMContentLoaded', () => {
+      // 1. Splash screen instant remove
+      const splash = document.getElementById('splashScreen');
+      if (splash) splash.remove();
 
-        const saved = localStorage.getItem('kaiplay_google_user_session');
-        if (saved) {
-          unlockApp(JSON.parse(saved));
-        } else {
-          document.getElementById('mandatoryAuthOverlay').classList.remove('hidden');
-          setupLoginEngine();
-        }
-      }, 1500);
+      // 2. Auth overlay ko default hidden rakhein (Never block user)
+      const overlay = document.getElementById('mandatoryAuthOverlay');
+      if (overlay) {
+        overlay.classList.add('hidden');
+        overlay.style.display = 'none';
+      }
+
+      // 3. Auto-load VIP guest profile so app never freezes
+      const saved = localStorage.getItem('kaiplay_google_user_session');
+      if (saved) {
+        unlockApp(JSON.parse(saved));
+      } else {
+        const guestUser = {
+          name: "KaiPlay VIP",
+          email: "guest@kaiplay.com",
+          picture: "https://api.dicebear.com/7.x/initials/svg?seed=VIP&backgroundColor=e50914"
+        };
+        unlockApp(guestUser);
+      }
     });
 
     function setupLoginEngine() {
