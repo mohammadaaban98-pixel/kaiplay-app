@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>KaiPlay by KaiWin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #0a0a0a; }
+    ::-webkit-scrollbar-thumb { background: #262626; border-radius: 4px; }
+    input[type=range] { accent-color: #e50914; }
+
+    .tab-pane { transition: opacity 0.25s ease, transform 0.25s ease; }
+    .tab-hidden { display: none; opacity: 0; transform: translateY(6px); }
+    .tab-active { display: block; opacity: 1; transform: translateY(0); }
+
+    .sheet-transition { transition: transform 0.38s cubic-bezier(0.2, 0.9, 0.3, 1); }
+    .sheet-down { transform: translateY(100%); pointer-events: none; }
+    .sheet-up { transform: translateY(0%); pointer-events: auto; }
+
+    .view-card { transition: opacity 0.3s ease, transform 0.3s ease; }
+    .view-hidden { opacity: 0; transform: scale(0.92); pointer-events: none; position: absolute; }
+    .view-active { opacity: 1; transform: scale(1); pointer-events: auto; position: relative; }
+
+    /* Synced Lyrics Karaoke Glow */
+    .active-lyric-line {
+      color: #ffffff !important;
+      font-size: 1.3rem !important;
+      font-weight: 800 !important;
+      transform: scale(1.04);
+      text-shadow: 0 0 16px rgba(229, 9, 20, 0.8);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 20px rgba(229, 9, 20, 0.5)); }
+      50% { transform: scale(1.06); filter: drop-shadow(0 0 45px rgba(229, 9, 20, 0.9)); }
+    }
+    .pulse-logo { animation: pulseGlow 1.8s infinite ease-in-out; }
+  </style>
+</head>
+<body class="bg-black text-[#a7a7a7] antialiased select-none h-screen flex flex-col overflow-hidden">
+
+  <!-- Splash Screen -->
+  <div id="splashScreen" class="fixed inset-0 z-[300] bg-black flex flex-col items-center justify-center transition-opacity duration-700">
+    <div class="flex flex-col items-center gap-4">
+      <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-red-600 via-[#e50914] to-black flex items-center justify-center shadow-[0_0_50px_rgba(229,9,20,0.85)] border border-red-500/40 pulse-logo">
+        <span class="text-white text-3xl font-black italic">K▶</span>
+      </div>
+      <h1 class="text-2xl font-black tracking-widest text-white mt-1">KAIPLAY</h1>
+      <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">BY KAIWIN</p>
+      <div class="w-44 h-1 bg-[#1a1a1a] rounded-full overflow-hidden mt-6">
+        <div class="h-full bg-[#e50914] rounded-full w-2/3 animate-[pulse_0.8s_infinite]"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mandatory Google Auth Overlay -->
+  <div id="mandatoryAuthOverlay" class="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl hidden flex flex-col items-center justify-center p-6 text-center">
+    <div class="w-full max-w-sm bg-[#121212] border border-[#2a2a2a] p-8 rounded-3xl shadow-2xl flex flex-col items-center gap-6">
+      <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-red-600 to-[#e50914] flex items-center justify-center text-white text-3xl font-black shadow-[0_0_40px_rgba(229,9,20,0.8)] border border-red-500/30">
+        K▶
+      </div>
+      <div>
+        <h2 class="text-2xl font-black tracking-wider text-white">KAIPLAY</h2>
+        <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-0.5">BY KAIWIN</p>
+        <p class="text-xs text-zinc-400 mt-3">Sign in with Google. Playlists aur history cloud par sync rahenge.</p>
+      </div>
+
+      <div id="googleBtnWrapper" class="w-full flex justify-center min-h-[44px]"></div>
+      <p class="text-[10px] text-zinc-600">Your profile, history & playlists will auto-restore.</p>
+    </div>
+  </div>
+
+  <!-- Fast Audio Engine (Hardware accelerated) -->
+  <div class="fixed top-0 left-0 w-1 h-1 opacity-0 pointer-events-none z-[-1]">
+    <div id="ytPlayer"></div>
+  </div>
+
+  <!-- Now Playing Sheet -->
+  <div id="nowPlayingSheet" class="fixed inset-0 z-50 bg-gradient-to-b from-[#400305] via-[#120708] to-[#070707] sheet-transition sheet-down flex flex-col justify-between p-5 pb-8 overflow-hidden">
+    
+    <!-- Top Bar with Prominent LYRICS Toggle Button -->
+    <div class="flex items-center justify-between pt-1">
+      <button onclick="closeNowPlaying()" class="w-10 h-10 flex items-center justify-center text-white text-2xl bg-white/10 rounded-full active:scale-90 transition">⌄</button>
+      <div class="text-center truncate px-3">
+        <p class="text-[9px] text-zinc-400 font-bold uppercase tracking-widest">Now Playing</p>
+        <p class="text-xs font-bold text-white truncate">Studio Master Audio</p>
+      </div>
+      <!-- Visible and Interactive Lyrics Toggle Button -->
+      <button onclick="toggleLyricsMode()" id="canvasLyricsToggle" class="px-4 py-1.5 rounded-full border border-white/20 text-white bg-black/60 hover:bg-[#e50914] hover:border-[#e50914] text-xs font-extrabold tracking-wide active:scale-95 transition flex items-center gap-1.5 shadow-lg">
+        <span>🎤</span> <span id="lyricsBtnText">Lyrics</span>
+      </button>
+    </div>
+
+    <!-- Center Display: Album Art VS Live Scrolling Lyrics -->
+    <div class="flex-1 flex flex-col items-center justify-center my-3 relative overflow-hidden">
+      <!-- Artwork Card -->
+      <div id="artCard" class="view-card view-active w-64 h-64 sm:w-80 sm:h-80 rounded-2xl overflow-hidden shadow-2xl border border-white/10">
+        <img id="canvasCover" src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400" class="w-full h-full object-cover" />
+      </div>
+
+      <!-- Real-Time Scrolling Lyrics Container -->
+      <div id="lyricsCard" class="view-card view-hidden w-full max-w-md h-80 sm:h-96 bg-black/70 backdrop-blur-xl rounded-2xl border border-white/10 p-5 flex flex-col">
+        <div class="flex items-center justify-between pb-2 border-b border-white/10 mb-2">
+          <span class="text-xs font-bold text-[#e50914] uppercase tracking-wider flex items-center gap-1">
+            <span>●</span> Live Synced Karaoke
+          </span>
+          <span class="text-[10px] text-zinc-500">Auto-Scroll Active</span>
+        </div>
+        <div id="lyricsContainer" class="flex-1 overflow-y-auto space-y-4 text-center pr-1 text-zinc-500 font-bold text-base leading-relaxed scroll-smooth">
+          Loading lyrics...
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls & Add to Playlist -->
+    <div class="w-full max-w-md mx-auto space-y-3">
+      <div class="flex items-center justify-between">
+        <div class="truncate pr-4">
+          <h2 id="canvasTitle" class="text-lg sm:text-xl font-extrabold text-white truncate">Track Title</h2>
+          <p id="canvasArtist" class="text-xs sm:text-sm text-zinc-400 truncate mt-0.5">Artist</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <!-- Direct Add to Playlist Button -->
+          <button onclick="promptAddToPlaylist()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/10 active:scale-95 transition">
+            <span>➕</span> <span>Playlist</span>
+          </button>
+          <button id="likeBtn" onclick="toggleCurrentTrackLike()" class="text-2xl text-zinc-400 hover:text-[#e50914] transition">♡</button>
+        </div>
+      </div>
+
+      <div>
+        <input id="canvasSeekBar" type="range" min="0" max="100" value="0" oninput="seek(this.value)" class="w-full h-1 bg-[#282828] rounded-lg appearance-none cursor-pointer" />
+        <div class="flex items-center justify-between text-[10px] text-zinc-400 mt-1">
+          <span id="canvasCurrentTime">0:00</span>
+          <span id="canvasTotalTime">0:00</span>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-center gap-8 pt-1">
+        <button onclick="prevSong()" class="text-zinc-400 hover:text-white active:scale-90 text-2xl transition">⏮</button>
+        <button onclick="togglePlayPause()" class="w-14 h-14 rounded-full bg-[#e50914] text-white flex items-center justify-center text-2xl font-bold shadow-xl shadow-red-950 active:scale-95 transition">
+          <span id="canvasPlayIcon">▶</span>
+        </button>
+        <button onclick="nextSong()" class="text-zinc-400 hover:text-white active:scale-90 text-2xl transition">⏭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main View -->
+  <div class="flex-1 flex overflow-hidden p-2 gap-2">
+    <!-- Desktop Sidebar -->
+    <aside class="w-64 bg-[#121212] rounded-xl flex flex-col p-4 gap-5 shrink-0 hidden md:flex border border-[#1f1f1f]">
+      <div class="flex items-center gap-3 px-2">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-red-600 to-[#e50914] flex items-center justify-center text-white font-black text-sm shadow-lg shadow-red-900/50">K▶</div>
+        <div>
+          <h2 class="text-white font-extrabold text-sm tracking-wider leading-none">KAIPLAY</h2>
+          <p class="text-[9px] text-zinc-500 font-bold tracking-widest uppercase">BY KAIWIN</p>
+        </div>
+      </div>
+
+      <nav class="space-y-1 font-semibold text-sm">
+        <button onclick="switchTab('home')" id="dNavHome" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-white bg-[#1f1f1f] transition">Home</button>
+        <button onclick="switchTab('search')" id="dNavSearch" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:text-white hover:bg-[#1a1a1a] transition">Search & Moods</button>
+        <button onclick="switchTab('library')" id="dNavLib" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:text-white hover:bg-[#1a1a1a] transition">Library & Playlists</button>
+        <button onclick="switchTab('profile')" id="dNavProfile" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:text-white hover:bg-[#1a1a1a] transition">Your Profile</button>
+      </nav>
+
+      <div class="flex-1 bg-[#171717] rounded-lg p-3 border border-[#222] text-xs space-y-1 overflow-y-auto">
+        <div class="flex items-center justify-between mb-2">
+          <p class="text-[10px] text-zinc-500 font-bold uppercase">My Playlists</p>
+          <button onclick="promptCreatePlaylist()" class="text-[#e50914] hover:underline font-bold text-xs">+ New</button>
+        </div>
+        <div id="sidebarPlaylists" class="space-y-1"></div>
+      </div>
+
+      <div onclick="switchTab('profile')" class="pt-3 border-t border-zinc-800 flex items-center justify-between cursor-pointer hover:bg-[#1c1c1c] p-2 rounded-xl transition">
+        <div class="flex items-center gap-2 min-w-0">
+          <img id="sidebarUserPic" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80" class="w-8 h-8 rounded-full border border-red-500/40 object-cover" />
+          <div class="truncate">
+            <p id="sidebarUserName" class="text-xs text-white font-bold truncate">User</p>
+            <p class="text-[9px] text-[#e50914] font-semibold">View Profile</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Viewport -->
+    <main class="flex-1 bg-[#121212] rounded-xl flex flex-col overflow-hidden relative border border-[#1f1f1f]">
+      <!-- Header -->
+      <header class="p-3 sm:px-6 sm:h-16 flex items-center justify-between border-b border-[#202020] bg-[#121212]/95 backdrop-blur sticky top-0 z-30 gap-3">
+        <div onclick="switchTab('profile')" class="md:hidden shrink-0 cursor-pointer">
+          <img id="mobileUserPic" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80" class="w-7 h-7 rounded-full border border-red-500/60 object-cover" />
+        </div>
+
+        <div class="relative flex-1 max-w-md">
+          <input 
+            id="searchInput" 
+            type="text" 
+            placeholder="Search artists, songs, lyrics..." 
+            autocomplete="off"
+            oninput="handleSuggest(this.value)"
+            onkeydown="if(event.key==='Enter') executeSearch(this.value)"
+            class="w-full bg-[#202020] text-white text-xs sm:text-sm rounded-full pl-9 pr-20 py-2 sm:py-2.5 border border-transparent focus:border-[#e50914] focus:outline-none placeholder:text-zinc-500"
+          />
+          <span class="absolute left-3 top-2 sm:top-2.5 text-zinc-500 text-xs">🔍</span>
+          <button onclick="executeSearch(document.getElementById('searchInput').value)" class="absolute right-1.5 top-1 text-[11px] bg-[#e50914] hover:bg-red-600 text-white font-bold px-3 py-1.5 rounded-full transition">Search</button>
+          <div id="suggestBox" class="absolute left-0 right-0 top-11 bg-[#181818] border border-[#2b2b2b] rounded-xl shadow-2xl overflow-hidden hidden z-50"></div>
+        </div>
+
+        <button onclick="switchTab('profile')" class="md:hidden text-zinc-400 text-xs font-bold p-1">Profile</button>
+      </header>
+
+      <div id="contentView" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 pb-32">
+        <!-- TAB 1: HOME -->
+        <div id="tab_home" class="tab-pane tab-active space-y-6">
+          <div class="relative w-full rounded-2xl overflow-hidden border border-[#2a2a2a] shadow-2xl bg-gradient-to-r from-black via-[#260507] to-black p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="z-10 text-center md:text-left">
+              <span class="text-[10px] font-black uppercase tracking-widest text-[#e50914] bg-red-950/60 px-3 py-1 rounded-full border border-red-800/40">Cloud Sync Active</span>
+              <h1 class="text-2xl sm:text-3xl font-black text-white mt-2">Welcome, <span id="welcomeUserName" class="text-[#e50914]">VIP Listener</span></h1>
+              <p class="text-xs text-zinc-400 mt-1">Playlists, recently played aur favorites aapki Gmail ID se linked hain.</p>
+            </div>
+            <div class="w-24 h-24 rounded-2xl bg-gradient-to-br from-red-600 to-[#990a10] flex items-center justify-center text-white text-4xl font-black shadow-[0_0_30px_rgba(229,9,20,0.7)] border border-red-500/40">K▶</div>
+          </div>
+
+          <div id="recentHistoryContainer" class="hidden">
+            <h2 class="text-lg sm:text-xl font-bold text-white flex items-center gap-2"><span>🕒</span> Recently Played</h2>
+            <div id="historyGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mt-3"></div>
+          </div>
+
+          <div>
+            <h2 id="homeSectionTitle" class="text-lg sm:text-xl font-bold text-white">Recommended Songs</h2>
+            <div id="recommendedGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mt-3"></div>
+          </div>
+        </div>
+
+        <!-- TAB 2: SEARCH & MOODS -->
+        <div id="tab_search" class="tab-pane tab-hidden space-y-6">
+          <div class="flex items-center gap-2 overflow-x-auto pb-1">
+            <button onclick="setFilter('all')" id="f_all" class="px-4 py-1.5 rounded-full text-xs font-bold bg-[#e50914] text-white">All</button>
+            <button onclick="setFilter('songs')" id="f_songs" class="px-4 py-1.5 rounded-full text-xs font-bold bg-[#202020] text-zinc-300">Songs</button>
+            <button onclick="setFilter('artists')" id="f_artists" class="px-4 py-1.5 rounded-full text-xs font-bold bg-[#202020] text-zinc-300">Artists</button>
+          </div>
+
+          <!-- Dynamic Search Results -->
+          <div id="searchResultsSection" class="hidden space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 id="searchResultsTitle" class="text-lg font-bold text-white">Search Results</h3>
+              <button onclick="clearSearch()" class="text-xs text-zinc-400 hover:text-white">✕ Clear</button>
+            </div>
+            <div id="searchResultsGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4"></div>
+          </div>
+
+          <!-- Moods & Genres -->
+          <div id="moodsGenresHub" class="space-y-6">
+            <div>
+              <h3 class="text-lg font-bold text-white mb-3 flex items-center gap-2"><span>🎭</span> Explore by Mood</h3>
+              <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                <div onclick="quickSearch('Bollywood Romantic Love Songs')" class="h-28 rounded-2xl p-4 bg-gradient-to-br from-rose-900 to-black border border-rose-500/20 cursor-pointer hover:scale-[1.02] transition font-black text-white text-base shadow-lg">Romantic Love ❤️</div>
+                <div onclick="quickSearch('Lofi Chill Hindi Songs')" class="h-28 rounded-2xl p-4 bg-gradient-to-br from-indigo-950 to-black border border-indigo-500/20 cursor-pointer hover:scale-[1.02] transition font-black text-white text-base shadow-lg">Chill & Relax ☕</div>
+                <div onclick="quickSearch('Gym Workout Beast Mode Hindi Bass')" class="h-28 rounded-2xl p-4 bg-gradient-to-br from-amber-950 to-black border border-orange-500/20 cursor-pointer hover:scale-[1.02] transition font-black text-white text-base shadow-lg">Gym Beast ⚡</div>
+                <div onclick="quickSearch('Sad Broken Heart Emotional Hindi Songs')" class="h-28 rounded-2xl p-4 bg-gradient-to-br from-zinc-900 to-black border border-zinc-700/30 cursor-pointer hover:scale-[1.02] transition font-black text-white text-base shadow-lg">Broken Heart 💔</div>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="text-lg font-bold text-white mb-3 flex items-center gap-2"><span>🎸</span> Explore by Genre</h3>
+              <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                <div onclick="quickSearch('Top Punjabi Pop Hits 2026')" class="h-28 rounded-2xl p-4 bg-gradient-to-br from-yellow-950 to-black border border-yellow-500/20 cursor-pointer hover:scale-[1.02] transition font-black text-white text-base shadow-lg">Punjabi Fire 🔥</div>
+                <div onclick="quickSearch('Top Bollywood Hits 2026')" class="h-28 rounded-2xl p-4 bg-gradient-to-br from-red-950 to-black border border-red-500/20 cursor-pointer hover:scale-[1.02] transition font-black text-white text-base shadow-lg">Bollywood Hits 🎬</div>
+                <div onclick="quickSearch('Golden Era 90s Kishore Kumar Mohammad Rafi Classics')" class="h-28 rounded-2xl p-4 bg-gradient-to-br from-emerald-950 to-black border border-emerald-500/20 cursor-pointer hover:scale-[1.02] transition font-black text-white text-base shadow-lg">90s & Retro 📻</div>
+                <div onclick="quickSearch('Bhakti Sagar Shiv Bhajan Krishna Bhajans Devotional')" class="h-28 rounded-2xl p-4 bg-gradient-to-br from-orange-950 to-black border border-amber-600/30 cursor-pointer hover:scale-[1.02] transition font-black text-white text-base shadow-lg">Devotional 🪔</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: LIBRARY & PLAYLISTS -->
+        <div id="tab_library" class="tab-pane tab-hidden space-y-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-xl font-bold text-white">📁 My Playlists</h2>
+              <p class="text-xs text-zinc-400">Aapki custom playlists</p>
+            </div>
+            <button onclick="promptCreatePlaylist()" class="bg-[#e50914] text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-red-700 transition active:scale-95 shadow-lg shadow-red-950">+ New Playlist</button>
+          </div>
+
+          <!-- Playlists Container (Guaranteed Live Rendering) -->
+          <div id="userPlaylistsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div class="p-5 rounded-2xl bg-[#171717] border border-[#252525] text-center text-zinc-500 text-xs col-span-full">Aapne abhi koi custom playlist nahi banayi. "+ New Playlist" click karke banayein.</div>
+          </div>
+
+          <div class="pt-4 border-t border-zinc-800">
+            <h2 class="text-xl font-bold text-white mb-3">❤️ Liked Songs</h2>
+            <div id="likedGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4"></div>
+          </div>
+
+          <div class="pt-4 border-t border-zinc-800">
+            <h2 class="text-xl font-bold text-white mb-3">🕒 Complete Listening History</h2>
+            <div id="fullHistoryGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4"></div>
+          </div>
+        </div>
+
+        <!-- TAB 4: PROFILE -->
+        <div id="tab_profile" class="tab-pane tab-hidden space-y-6">
+          <div class="bg-[#161616] border border-[#2b2b2b] rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-6 relative overflow-hidden shadow-2xl">
+            <img id="tabProfilePic" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=160" class="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-[#e50914] object-cover shadow-2xl" />
+            <div class="text-center sm:text-left flex-1 min-w-0">
+              <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                <h2 id="tabProfileName" class="text-2xl sm:text-3xl font-black text-white truncate">User Name</h2>
+                <span class="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-red-950 text-red-400 border border-red-800/50">VIP Account</span>
+              </div>
+              <p id="tabProfileEmail" class="text-xs text-zinc-400 font-mono mt-1">user@gmail.com</p>
+              <div class="flex flex-wrap items-center justify-center sm:justify-start gap-4 mt-4 text-xs font-semibold text-zinc-300">
+                <div class="bg-[#202020] px-3.5 py-1.5 rounded-xl border border-zinc-800"><span id="statHistoryCount" class="text-white font-bold text-sm">0</span> Played</div>
+                <div class="bg-[#202020] px-3.5 py-1.5 rounded-xl border border-zinc-800"><span id="statLikedCount" class="text-red-500 font-bold text-sm">0</span> Liked</div>
+                <div class="bg-[#202020] px-3.5 py-1.5 rounded-xl border border-zinc-800"><span id="statPlaylistCount" class="text-yellow-500 font-bold text-sm">0</span> Playlists</div>
+              </div>
+            </div>
+            <button onclick="logoutGoogle()" class="py-2.5 px-6 rounded-full bg-red-950/70 hover:bg-red-900 border border-red-800 text-red-300 text-xs font-bold transition active:scale-95">Sign Out</button>
+          </div>
+
+          <div class="bg-[#161616] border border-[#262626] rounded-2xl p-5 space-y-2 text-xs">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2"><span>⚖️</span> Copyright & DMCA Disclaimer</h3>
+            <p class="text-zinc-400 leading-relaxed">KaiPlay operates strictly as a metadata proxy and does not host copyrighted media.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Persistent Dock -->
+  <footer class="h-16 sm:h-20 bg-[#0d0d0d] border-t border-[#1f1f1f] px-3 sm:px-6 flex items-center justify-between shrink-0 z-30 fixed bottom-14 md:bottom-0 left-0 right-0">
+    <div onclick="openNowPlaying()" class="flex items-center gap-2.5 flex-1 min-w-0 cursor-pointer">
+      <img id="dockCover" src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=100" class="w-10 h-10 sm:w-12 sm:h-12 rounded object-cover border border-[#222]" />
+      <div class="truncate">
+        <h4 id="dockTitle" class="text-white text-xs sm:text-sm font-semibold truncate">Select a track</h4>
+        <p id="dockArtist" class="text-[10px] sm:text-xs text-zinc-400 truncate">KaiPlay Audio</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <button onclick="togglePlayPause()" class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#e50914] text-white flex items-center justify-center font-bold text-sm shadow-md active:scale-95 transition">
+        <span id="dockPlayIcon">▶</span>
+      </button>
+      <button onclick="openNowPlaying()" class="text-zinc-400 hover:text-white p-1 text-sm">⤢</button>
+    </div>
+  </footer>
+
+  <!-- Mobile Bottom Navigation -->
+  <div class="md:hidden fixed bottom-0 left-0 right-0 h-14 bg-[#121212] border-t border-[#202020] flex items-center justify-around z-40 px-2">
+    <button onclick="switchTab('home')" id="mNavHome" class="flex flex-col items-center gap-0.5 text-white"><span class="text-[9px] font-bold">Home</span></button>
+    <button onclick="switchTab('search')" id="mNavSearch" class="flex flex-col items-center gap-0.5 text-zinc-400"><span class="text-[9px] font-bold">Search</span></button>
+    <button onclick="switchTab('library')" id="mNavLib" class="flex flex-col items-center gap-0.5 text-zinc-400"><span class="text-[9px] font-bold">Library</span></button>
+    <button onclick="switchTab('profile')" id="mNavProfile" class="flex flex-col items-center gap-0.5 text-zinc-400"><span class="text-[9px] font-bold">Profile</span></button>
+  </div>
+
+  <script src="https://www.youtube.com/iframe_api"></script>
+
+  <script>
+    // 🔴 APNI CLIENT ID YAHAN RAKHEIN:
+    const GOOGLE_CLIENT_ID = "479766928706-fnf58o1q673h1stve8fia1ck8btpt88q.apps.googleusercontent.com";
+
+    let currentUser = null;
+    let currentTrackPlaying = null;
+    let userPlaylistsCache = {};
+    let ytPlayer = null;
+    let isPlaying = false;
+    let timer = null;
+    let activeFilter = 'all';
+    let suggestDebounce = null;
+    let syncedLyricLines = [];
+    let isLyricsActive = false;
+
+    // Fast Headless Audio Init
+    function onYouTubeIframeAPIReady() {
+      ytPlayer = new YT.Player('ytPlayer', {
+        height: '200',
+        width: '200',
+        playerVars: {
+          'autoplay': 1,
+          'controls': 0,
+          'playsinline': 1,
+          'enablejsapi': 1,
+          'origin': window.location.origin
+        },
+        events: {
+          'onStateChange': onStateChange,
+          'onError': (e) => console.log("YT Player Error:", e)
+        }
+      });
+    }
+
+    function onStateChange(e) {
+      if (e.data === YT.PlayerState.PLAYING) {
+        setPlaying(true);
+        startScrubber();
+      } else if (e.data === YT.PlayerState.PAUSED || e.data === YT.PlayerState.ENDED) {
+        setPlaying(false);
+      }
+    }
+
+    // Play Track
+    function playTrack(id, title, artist, thumb) {
+      const decTitle = decodeURIComponent(title);
+      const decArtist = decodeURIComponent(artist);
+      currentTrackPlaying = { id, title: decTitle, artist: decArtist, thumbnail: thumb };
+
+      document.getElementById('dockTitle').innerText = decTitle;
+      document.getElementById('dockArtist').innerText = decArtist;
+      document.getElementById('dockCover').src = thumb;
+
+      document.getElementById('canvasTitle').innerText = decTitle;
+      document.getElementById('canvasArtist').innerText = decArtist;
+      document.getElementById('canvasCover').src = thumb;
+
+      openNowPlaying();
+
+      if (ytPlayer && ytPlayer.loadVideoById) {
+        ytPlayer.loadVideoById({
+          videoId: id,
+          startSeconds: 0,
+          suggestedQuality: 'small'
+        });
+        ytPlayer.playVideo();
+        setPlaying(true);
+      }
+
+      // Reset to artwork by default, then fetch fresh lyrics
+      if (isLyricsActive) toggleLyricsMode();
+      fetchLyrics(decTitle, decArtist);
+      saveTrackToUserCloud(currentTrackPlaying, 'history');
+    }
+
+    function togglePlayPause() {
+      if (!ytPlayer || !ytPlayer.getPlayerState) return;
+      if (isPlaying) {
+        ytPlayer.pauseVideo();
+        setPlaying(false);
+      } else {
+        ytPlayer.playVideo();
+        setPlaying(true);
+      }
+    }
+
+    function setPlaying(state) {
+      isPlaying = state;
+      document.getElementById('dockPlayIcon').innerText = state ? '⏸' : '▶';
+      document.getElementById('canvasPlayIcon').innerText = state ? '⏸' : '▶';
+    }
+
+    function startScrubber() {
+      if (timer) clearInterval(timer);
+      timer = setInterval(() => {
+        if (!ytPlayer || !ytPlayer.getCurrentTime) return;
+        const cur = ytPlayer.getCurrentTime() || 0;
+        const dur = ytPlayer.getDuration() || 0;
+        document.getElementById('canvasCurrentTime').innerText = fmt(cur);
+        document.getElementById('canvasTotalTime').innerText = fmt(dur);
+        if (dur > 0) document.getElementById('canvasSeekBar').value = (cur / dur) * 100;
+        
+        // Active Real-time Lyric Scroll Tracker
+        syncLyricsScroll(cur);
+      }, 350);
+    }
+
+    function seek(val) {
+      if (ytPlayer && ytPlayer.getDuration) {
+        ytPlayer.seekTo((val / 100) * ytPlayer.getDuration(), true);
+      }
+    }
+
+    function fmt(s) {
+      if (!s || isNaN(s)) return "0:00";
+      const m = Math.floor(s / 60);
+      const sec = Math.floor(s % 60);
+      return `${m}:${sec < 10 ? '0' : ''}${sec}`;
+    }
+
+    // ================= REAL-TIME LYRICS ENGINE =================
+    function toggleLyricsMode() {
+      const art = document.getElementById('artCard');
+      const lyrics = document.getElementById('lyricsCard');
+      const btn = document.getElementById('canvasLyricsToggle');
+      const btnText = document.getElementById('lyricsBtnText');
+
+      isLyricsActive = !isLyricsActive;
+
+      if (isLyricsActive) {
+        art.classList.remove('view-active');
+        art.classList.add('view-hidden');
+        lyrics.classList.remove('view-hidden');
+        lyrics.classList.add('view-active');
+        btn.classList.add('bg-[#e50914]', 'border-[#e50914]');
+        btnText.innerText = "Artwork";
+      } else {
+        lyrics.classList.remove('view-active');
+        lyrics.classList.add('view-hidden');
+        art.classList.remove('view-hidden');
+        art.classList.add('view-active');
+        btn.classList.remove('bg-[#e50914]', 'border-[#e50914]');
+        btnText.innerText = "Lyrics";
+      }
+    }
+
+    async function fetchLyrics(title, artist) {
+      const box = document.getElementById('lyricsContainer');
+      box.innerHTML = '<span class="text-zinc-500 animate-pulse">Syncing lyrics with studio track...</span>';
+      syncedLyricLines = [];
+
+      try {
+        const res = await fetch(`/api/lyrics?title=${encodeURIComponent(title)}&artist=${encodeURIComponent(artist)}`);
+        const data = await res.json();
+
+        if (data.syncedLyrics) {
+          // Parse LRC timestamp format [mm:ss.xx]
+          syncedLyricLines = data.syncedLyrics.split('\n').map(line => {
+            const m = line.match(/\[(\d+):(\d+\.?\d*)\](.*)/);
+            if (m) {
+              const seconds = parseInt(m[1]) * 60 + parseFloat(m[2]);
+              return { time: seconds, text: m[3].trim() };
+            }
+            return null;
+          }).filter(Boolean);
+
+          box.innerHTML = syncedLyricLines.map((l, idx) => `
+            <p id="line_${idx}" class="transition-all duration-200 cursor-pointer hover:text-zinc-300 py-1.5 text-zinc-500 font-bold">${l.text || '♪'}</p>
+          `).join('');
+        } else if (data.plainLyrics) {
+          box.innerHTML = `<p class="whitespace-pre-line text-zinc-300 text-sm leading-loose">${data.plainLyrics}</p>`;
+        } else {
+          box.innerHTML = `<p class="text-zinc-500">Lyrics unavailable for this track.</p>`;
+        }
+      } catch (e) {
+        box.innerHTML = `<p class="text-zinc-500">Lyrics engine offline.</p>`;
+      }
+    }
+
+    function syncLyricsScroll(currentTime) {
+      if (!syncedLyricLines.length || !isLyricsActive) return;
+      for (let i = 0; i < syncedLyricLines.length; i++) {
+        const curr = syncedLyricLines[i];
+        const next = syncedLyricLines[i + 1];
+        if (currentTime >= curr.time && (!next || currentTime < next.time)) {
+          const el = document.getElementById(`line_${i}`);
+          if (el && !el.classList.contains('active-lyric-line')) {
+            document.querySelectorAll('#lyricsContainer p').forEach(p => p.classList.remove('active-lyric-line'));
+            el.classList.add('active-lyric-line');
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          break;
+        }
+      }
+    }
+
+    // ================= PLAYLISTS MANAGEMENT =================
+    async function promptCreatePlaylist() {
+      const name = prompt("Nayi Playlist ka Naam likhein:", "");
+      if (!name || !name.trim()) return;
+      await saveTrackToUserCloud(null, 'create_playlist', name.trim());
+      alert(`Playlist "${name.trim()}" create ho gayi!`);
+    }
+
+    function promptAddToPlaylist() {
+      if (!currentTrackPlaying) {
+        alert("Pehle koi gaana play karein.");
+        return;
+      }
+      const names = Object.keys(userPlaylistsCache);
+      if (names.length === 0) {
+        if (confirm("Aapke paas koi playlist nahi hai. Nayi banayein?")) promptCreatePlaylist();
+        return;
+      }
+      const chosen = prompt(`Kis playlist me add karein?\nAvailable: ${names.join(', ')}`, names[0]);
+      if (chosen && userPlaylistsCache[chosen]) {
+        saveTrackToUserCloud(currentTrackPlaying, 'add_to_playlist', chosen);
+        alert(`"${currentTrackPlaying.title}" added to ${chosen}!`);
+      }
+    }
+
+    function toggleCurrentTrackLike() {
+      if (!currentTrackPlaying) return;
+      saveTrackToUserCloud(currentTrackPlaying, 'like');
+      const likeBtn = document.getElementById('likeBtn');
+      likeBtn.innerText = likeBtn.innerText === '❤️' ? '♡' : '❤️';
+    }
+
+    async function saveTrackToUserCloud(track, action, playlistName = '') {
+      if (!currentUser || !currentUser.email) return;
+      try {
+        const res = await fetch('/api/user/save-track', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: currentUser.email, track, action, playlistName })
+        });
+        const json = await res.json();
+        if (json.userData) {
+          updateUserPlaylistsLocal(json.userData);
+        }
+      } catch(e) {
+        console.error("Save error:", e);
+      }
+    }
+
+    async function syncUserDataFromServer(email) {
+      try {
+        const res = await fetch(`/api/user/sync?email=${encodeURIComponent(email)}`);
+        const data = await res.json();
+        updateUserPlaylistsLocal(data);
+      } catch (e) {
+        console.log("Sync error:", e);
+      }
+    }
+
+    function updateUserPlaylistsLocal(data) {
+      userPlaylistsCache = data.playlists || {};
+
+      document.getElementById('statHistoryCount').innerText = data.history?.length || 0;
+      document.getElementById('statLikedCount').innerText = data.likedSongs?.length || 0;
+      document.getElementById('statPlaylistCount').innerText = Object.keys(userPlaylistsCache).length;
+
+      renderPlaylistsUI(userPlaylistsCache);
+
+      if (data.history?.length) {
+        document.getElementById('recentHistoryContainer').classList.remove('hidden');
+        renderCardGrid(data.history.slice(0, 10), 'historyGrid');
+        renderCardGrid(data.history, 'fullHistoryGrid');
+      }
+
+      if (data.likedSongs?.length) {
+        renderCardGrid(data.likedSongs, 'likedGrid');
+      }
+    }
+
+    function renderPlaylistsUI(playlists) {
+      const container = document.getElementById('userPlaylistsContainer');
+      const sideContainer = document.getElementById('sidebarPlaylists');
+      const names = Object.keys(playlists);
+
+      if (!names.length) {
+        container.innerHTML = `<div class="p-5 rounded-2xl bg-[#171717] border border-[#252525] text-center text-zinc-500 text-xs col-span-full">Aapne abhi koi custom playlist nahi banayi. "+ New Playlist" click karke banayein.</div>`;
+        sideContainer.innerHTML = `<p class="text-zinc-600 text-[11px] p-2">No playlists</p>`;
+        return;
+      }
+
+      sideContainer.innerHTML = names.map(n => `
+        <button onclick="openPlaylistView('${n}')" class="w-full text-left py-1.5 px-2 rounded hover:bg-[#252525] hover:text-white truncate text-zinc-400">📁 ${n}</button>
+      `).join('');
+
+      container.innerHTML = names.map(n => `
+        <div onclick="openPlaylistView('${n}')" class="p-4 rounded-2xl bg-[#181818] border border-[#262626] hover:border-[#e50914] cursor-pointer transition">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-xl bg-red-950 flex items-center justify-center text-red-500 text-xl font-bold">♫</div>
+            <div class="truncate">
+              <h4 class="font-bold text-sm text-white truncate">${n}</h4>
+              <p class="text-zinc-400 text-xs">${playlists[n].length} Songs</p>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openPlaylistView(name) {
+      const tracks = userPlaylistsCache[name] || [];
+      if (!tracks.length) {
+        alert(`Playlist "${name}" khali hai. Gaane ke screen se ➕ daba kar add karein.`);
+        return;
+      }
+      switchTab('library');
+      renderCardGrid(tracks, 'likedGrid');
+      playTrack(tracks[0].id, tracks[0].title, tracks[0].artist, tracks[0].thumbnail);
+    }
+
+    // Tab Switching
+    function switchTab(tabId) {
+      ['home', 'search', 'library', 'profile'].forEach(t => {
+        document.getElementById(`tab_${t}`).classList.toggle('tab-active', t === tabId);
+        document.getElementById(`tab_${t}`).classList.toggle('tab-hidden', t !== tabId);
+      });
+      if (tabId === 'search') {
+        setTimeout(() => document.getElementById('searchInput').focus(), 100);
+      }
+    }
+
+    // Google Auth Lifecycle
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        const splash = document.getElementById('splashScreen');
+        if (splash) splash.remove();
+
+        const saved = localStorage.getItem('kaiplay_google_user_session');
+        if (saved) {
+          unlockApp(JSON.parse(saved));
+        } else {
+          document.getElementById('mandatoryAuthOverlay').classList.remove('hidden');
+          setupGoogleBtn();
+        }
+      }, 2000);
+    });
+
+    function setupGoogleBtn() {
+      if (window.google && GOOGLE_CLIENT_ID !== "YOUR_CLIENT_ID_HERE") {
+        google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: (r) => {
+            const p = JSON.parse(decodeURIComponent(atob(r.credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+            const u = { name: p.name, email: p.email, picture: p.picture };
+            localStorage.setItem('kaiplay_google_user_session', JSON.stringify(u));
+            unlockApp(u);
+          }
+        });
+        google.accounts.id.renderButton(document.getElementById("googleBtnWrapper"), { theme: "filled_black", size: "large", shape: "pill", width: 240 });
+      }
+    }
+
+    function unlockApp(user) {
+      currentUser = user;
+      document.getElementById('mandatoryAuthOverlay').classList.add('hidden');
+      document.getElementById('welcomeUserName').innerText = user.name;
+      document.getElementById('sidebarUserName').innerText = user.name;
+      document.getElementById('tabProfileName').innerText = user.name;
+      document.getElementById('tabProfileEmail').innerText = user.email;
+      if (user.picture) {
+        document.getElementById('sidebarUserPic').src = user.picture;
+        document.getElementById('mobileUserPic').src = user.picture;
+        document.getElementById('tabProfilePic').src = user.picture;
+      }
+      syncUserDataFromServer(user.email);
+      loadInitialShelves();
+    }
+
+    function logoutGoogle() {
+      localStorage.removeItem('kaiplay_google_user_session');
+      window.location.reload();
+    }
+
+    // Auto Suggest & Search
+    function handleSuggest(val) {
+      clearTimeout(suggestDebounce);
+      const box = document.getElementById('suggestBox');
+      const q = val.trim();
+      if (!q) { box.classList.add('hidden'); return; }
+
+      suggestDebounce = setTimeout(async () => {
+        try {
+          const res = await fetch(`/api/suggest?q=${encodeURIComponent(q)}`);
+          const items = await res.json();
+          if (!items.length) { box.classList.add('hidden'); return; }
+          box.innerHTML = items.slice(0, 6).map(it => `
+            <div onclick="selectSearchQuery('${encodeURIComponent(it)}')" class="px-4 py-2.5 text-xs text-zinc-300 hover:bg-[#252525] hover:text-white cursor-pointer flex items-center gap-2">🔍 <span>${it}</span></div>
+          `).join('');
+          box.classList.remove('hidden');
+        } catch(e) { box.classList.add('hidden'); }
+      }, 150);
+    }
+
+    function selectSearchQuery(it) {
+      const q = decodeURIComponent(it);
+      document.getElementById('searchInput').value = q;
+      document.getElementById('suggestBox').classList.add('hidden');
+      executeSearch(q);
+    }
+
+    async function executeSearch(query) {
+      if (!query) return;
+      switchTab('search');
+      document.getElementById('suggestBox').classList.add('hidden');
+
+      const sec = document.getElementById('searchResultsSection');
+      const grid = document.getElementById('searchResultsGrid');
+      sec.classList.remove('hidden');
+      grid.innerHTML = `<div class="col-span-full py-12 text-center text-zinc-500 text-xs">Searching tracks...</div>`;
+
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&filter=${activeFilter}`);
+        const tracks = await res.json();
+        renderCardGrid(tracks, 'searchResultsGrid');
+      } catch (e) {
+        grid.innerHTML = `<div class="col-span-full py-12 text-center text-red-500 text-xs">Error loading songs.</div>`;
+      }
+    }
+
+    function clearSearch() {
+      document.getElementById('searchResultsSection').classList.add('hidden');
+      document.getElementById('searchInput').value = '';
+    }
+
+    function quickSearch(q) {
+      document.getElementById('searchInput').value = q;
+      executeSearch(q);
+    }
+
+    function setFilter(f) {
+      activeFilter = f;
+      ['all', 'songs', 'artists'].forEach(k => {
+        document.getElementById(`f_${k}`).className = (k === f) ? "px-4 py-1.5 rounded-full text-xs font-bold bg-[#e50914] text-white" : "px-4 py-1.5 rounded-full text-xs font-bold bg-[#202020] text-zinc-300";
+      });
+      const q = document.getElementById('searchInput').value.trim();
+      if (q) executeSearch(q);
+    }
+
+    function renderCardGrid(tracks, gridId) {
+      const grid = document.getElementById(gridId);
+      if (!tracks || !tracks.length) return;
+      grid.innerHTML = tracks.map(t => `
+        <div onclick="playTrack('${t.id}', '${encodeURIComponent(t.title)}', '${encodeURIComponent(t.artist)}', '${t.thumbnail}')" 
+             class="bg-[#171717] hover:bg-[#202020] p-2.5 rounded-xl cursor-pointer transition active:scale-95 group flex flex-col justify-between border border-transparent hover:border-[#333]">
+          <div class="relative mb-2 overflow-hidden rounded-lg aspect-square">
+            <img src="${t.thumbnail}" class="w-full h-full object-cover group-hover:scale-105 transition" />
+            <div class="w-8 h-8 rounded-full bg-[#e50914] text-white flex items-center justify-center absolute bottom-1.5 right-1.5 shadow-lg text-xs font-bold">▶</div>
+          </div>
+          <div>
+            <h4 class="font-bold text-xs truncate text-white">${t.title}</h4>
+            <p class="text-[10px] text-zinc-400 truncate mt-0.5">${t.artist}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function loadInitialShelves() {
+      fetch(`/api/search?q=Hindi+Top+Trending+Songs+2026`)
+        .then(r => r.json())
+        .then(data => renderCardGrid(data.slice(0, 10), 'recommendedGrid'))
+        .catch(() => {});
+    }
+
+    function openNowPlaying() { document.getElementById('nowPlayingSheet').classList.replace('sheet-down', 'sheet-up'); }
+    function closeNowPlaying() { document.getElementById('nowPlayingSheet').classList.replace('sheet-up', 'sheet-down'); }
+  </script>
+</body>
+</html>
