@@ -29,7 +29,6 @@
     .view-hidden { opacity: 0; transform: scale(0.92); pointer-events: none; position: absolute; }
     .view-active { opacity: 1; transform: scale(1); pointer-events: auto; position: relative; }
 
-    /* Synced Lyrics Karaoke Glow */
     .active-lyric-line {
       color: #ffffff !important;
       font-size: 1.3rem !important;
@@ -71,49 +70,43 @@
       <div>
         <h2 class="text-2xl font-black tracking-wider text-white">KAIPLAY</h2>
         <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-0.5">BY KAIWIN</p>
-        <p class="text-xs text-zinc-400 mt-3">Sign in with Google. Playlists aur history cloud par sync rahenge.</p>
+        <p class="text-xs text-zinc-400 mt-3">Sign in to save your playlists, history and favorites on cloud.</p>
       </div>
 
       <div id="googleBtnWrapper" class="w-full flex justify-center min-h-[44px]"></div>
-      <p class="text-[10px] text-zinc-600">Your profile, history & playlists will auto-restore.</p>
+      <p class="text-[10px] text-zinc-600">Auto-restores on your account login.</p>
     </div>
   </div>
 
-  <!-- Fast Audio Engine (Hardware accelerated) -->
+  <!-- Hardware Audio Engine -->
   <div class="fixed top-0 left-0 w-1 h-1 opacity-0 pointer-events-none z-[-1]">
     <div id="ytPlayer"></div>
   </div>
 
   <!-- Now Playing Sheet -->
   <div id="nowPlayingSheet" class="fixed inset-0 z-50 bg-gradient-to-b from-[#400305] via-[#120708] to-[#070707] sheet-transition sheet-down flex flex-col justify-between p-5 pb-8 overflow-hidden">
-    
-    <!-- Top Bar with Prominent LYRICS Toggle Button -->
     <div class="flex items-center justify-between pt-1">
       <button onclick="closeNowPlaying()" class="w-10 h-10 flex items-center justify-center text-white text-2xl bg-white/10 rounded-full active:scale-90 transition">⌄</button>
       <div class="text-center truncate px-3">
         <p class="text-[9px] text-zinc-400 font-bold uppercase tracking-widest">Now Playing</p>
         <p class="text-xs font-bold text-white truncate">Studio Master Audio</p>
       </div>
-      <!-- Visible and Interactive Lyrics Toggle Button -->
-      <button onclick="toggleLyricsMode()" id="canvasLyricsToggle" class="px-4 py-1.5 rounded-full border border-white/20 text-white bg-black/60 hover:bg-[#e50914] hover:border-[#e50914] text-xs font-extrabold tracking-wide active:scale-95 transition flex items-center gap-1.5 shadow-lg">
+      <button onclick="toggleLyricsMode()" id="canvasLyricsToggle" class="px-4 py-1.5 rounded-full border border-white/20 text-white bg-black/60 hover:bg-[#e50914] text-xs font-extrabold tracking-wide active:scale-95 transition flex items-center gap-1.5 shadow-lg">
         <span>🎤</span> <span id="lyricsBtnText">Lyrics</span>
       </button>
     </div>
 
-    <!-- Center Display: Album Art VS Live Scrolling Lyrics -->
     <div class="flex-1 flex flex-col items-center justify-center my-3 relative overflow-hidden">
-      <!-- Artwork Card -->
       <div id="artCard" class="view-card view-active w-64 h-64 sm:w-80 sm:h-80 rounded-2xl overflow-hidden shadow-2xl border border-white/10">
         <img id="canvasCover" src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400" class="w-full h-full object-cover" />
       </div>
 
-      <!-- Real-Time Scrolling Lyrics Container -->
       <div id="lyricsCard" class="view-card view-hidden w-full max-w-md h-80 sm:h-96 bg-black/70 backdrop-blur-xl rounded-2xl border border-white/10 p-5 flex flex-col">
         <div class="flex items-center justify-between pb-2 border-b border-white/10 mb-2">
           <span class="text-xs font-bold text-[#e50914] uppercase tracking-wider flex items-center gap-1">
-            <span>●</span> Live Synced Karaoke
+            <span>●</span> Live Synced Lyrics
           </span>
-          <span class="text-[10px] text-zinc-500">Auto-Scroll Active</span>
+          <span class="text-[10px] text-zinc-500">Auto-Scroll</span>
         </div>
         <div id="lyricsContainer" class="flex-1 overflow-y-auto space-y-4 text-center pr-1 text-zinc-500 font-bold text-base leading-relaxed scroll-smooth">
           Loading lyrics...
@@ -121,7 +114,6 @@
       </div>
     </div>
 
-    <!-- Controls & Add to Playlist -->
     <div class="w-full max-w-md mx-auto space-y-3">
       <div class="flex items-center justify-between">
         <div class="truncate pr-4">
@@ -129,7 +121,6 @@
           <p id="canvasArtist" class="text-xs sm:text-sm text-zinc-400 truncate mt-0.5">Artist</p>
         </div>
         <div class="flex items-center gap-3">
-          <!-- Direct Add to Playlist Button -->
           <button onclick="promptAddToPlaylist()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/10 active:scale-95 transition">
             <span>➕</span> <span>Playlist</span>
           </button>
@@ -195,7 +186,6 @@
 
     <!-- Main Viewport -->
     <main class="flex-1 bg-[#121212] rounded-xl flex flex-col overflow-hidden relative border border-[#1f1f1f]">
-      <!-- Header -->
       <header class="p-3 sm:px-6 sm:h-16 flex items-center justify-between border-b border-[#202020] bg-[#121212]/95 backdrop-blur sticky top-0 z-30 gap-3">
         <div onclick="switchTab('profile')" class="md:hidden shrink-0 cursor-pointer">
           <img id="mobileUserPic" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80" class="w-7 h-7 rounded-full border border-red-500/60 object-cover" />
@@ -220,13 +210,13 @@
       </header>
 
       <div id="contentView" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 pb-32">
-        <!-- TAB 1: HOME -->
+        <!-- HOME -->
         <div id="tab_home" class="tab-pane tab-active space-y-6">
           <div class="relative w-full rounded-2xl overflow-hidden border border-[#2a2a2a] shadow-2xl bg-gradient-to-r from-black via-[#260507] to-black p-6 flex flex-col md:flex-row items-center justify-between gap-4">
             <div class="z-10 text-center md:text-left">
               <span class="text-[10px] font-black uppercase tracking-widest text-[#e50914] bg-red-950/60 px-3 py-1 rounded-full border border-red-800/40">Cloud Sync Active</span>
               <h1 class="text-2xl sm:text-3xl font-black text-white mt-2">Welcome, <span id="welcomeUserName" class="text-[#e50914]">VIP Listener</span></h1>
-              <p class="text-xs text-zinc-400 mt-1">Playlists, recently played aur favorites aapki Gmail ID se linked hain.</p>
+              <p class="text-xs text-zinc-400 mt-1">Playlists, recently played aur favorites cloud par sync hain.</p>
             </div>
             <div class="w-24 h-24 rounded-2xl bg-gradient-to-br from-red-600 to-[#990a10] flex items-center justify-center text-white text-4xl font-black shadow-[0_0_30px_rgba(229,9,20,0.7)] border border-red-500/40">K▶</div>
           </div>
@@ -242,7 +232,7 @@
           </div>
         </div>
 
-        <!-- TAB 2: SEARCH & MOODS -->
+        <!-- SEARCH -->
         <div id="tab_search" class="tab-pane tab-hidden space-y-6">
           <div class="flex items-center gap-2 overflow-x-auto pb-1">
             <button onclick="setFilter('all')" id="f_all" class="px-4 py-1.5 rounded-full text-xs font-bold bg-[#e50914] text-white">All</button>
@@ -250,7 +240,6 @@
             <button onclick="setFilter('artists')" id="f_artists" class="px-4 py-1.5 rounded-full text-xs font-bold bg-[#202020] text-zinc-300">Artists</button>
           </div>
 
-          <!-- Dynamic Search Results -->
           <div id="searchResultsSection" class="hidden space-y-3">
             <div class="flex items-center justify-between">
               <h3 id="searchResultsTitle" class="text-lg font-bold text-white">Search Results</h3>
@@ -259,7 +248,6 @@
             <div id="searchResultsGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4"></div>
           </div>
 
-          <!-- Moods & Genres -->
           <div id="moodsGenresHub" class="space-y-6">
             <div>
               <h3 class="text-lg font-bold text-white mb-3 flex items-center gap-2"><span>🎭</span> Explore by Mood</h3>
@@ -283,7 +271,7 @@
           </div>
         </div>
 
-        <!-- TAB 3: LIBRARY & PLAYLISTS -->
+        <!-- LIBRARY -->
         <div id="tab_library" class="tab-pane tab-hidden space-y-6">
           <div class="flex items-center justify-between">
             <div>
@@ -293,7 +281,6 @@
             <button onclick="promptCreatePlaylist()" class="bg-[#e50914] text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-red-700 transition active:scale-95 shadow-lg shadow-red-950">+ New Playlist</button>
           </div>
 
-          <!-- Playlists Container (Guaranteed Live Rendering) -->
           <div id="userPlaylistsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <div class="p-5 rounded-2xl bg-[#171717] border border-[#252525] text-center text-zinc-500 text-xs col-span-full">Aapne abhi koi custom playlist nahi banayi. "+ New Playlist" click karke banayein.</div>
           </div>
@@ -309,7 +296,7 @@
           </div>
         </div>
 
-        <!-- TAB 4: PROFILE -->
+        <!-- PROFILE -->
         <div id="tab_profile" class="tab-pane tab-hidden space-y-6">
           <div class="bg-[#161616] border border-[#2b2b2b] rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-6 relative overflow-hidden shadow-2xl">
             <img id="tabProfilePic" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=160" class="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-[#e50914] object-cover shadow-2xl" />
@@ -326,11 +313,6 @@
               </div>
             </div>
             <button onclick="logoutGoogle()" class="py-2.5 px-6 rounded-full bg-red-950/70 hover:bg-red-900 border border-red-800 text-red-300 text-xs font-bold transition active:scale-95">Sign Out</button>
-          </div>
-
-          <div class="bg-[#161616] border border-[#262626] rounded-2xl p-5 space-y-2 text-xs">
-            <h3 class="text-sm font-bold text-white flex items-center gap-2"><span>⚖️</span> Copyright & DMCA Disclaimer</h3>
-            <p class="text-zinc-400 leading-relaxed">KaiPlay operates strictly as a metadata proxy and does not host copyrighted media.</p>
           </div>
         </div>
       </div>
@@ -365,8 +347,7 @@
   <script src="https://www.youtube.com/iframe_api"></script>
 
   <script>
-    // 🔴 APNI CLIENT ID YAHAN RAKHEIN:
-    const GOOGLE_CLIENT_ID = "479766928706-fnf58o1q673h1stve8fia1ck8btpt88q.apps.googleusercontent.com";
+    const GOOGLE_CLIENT_ID = "YOUR_CLIENT_ID_HERE";
 
     let currentUser = null;
     let currentTrackPlaying = null;
@@ -379,7 +360,12 @@
     let syncedLyricLines = [];
     let isLyricsActive = false;
 
-    // Fast Headless Audio Init
+    // Detect if running inside Android APK (WebView)
+    function isAppWebView() {
+      const ua = navigator.userAgent || navigator.vendor || window.opera;
+      return (ua.includes('wv') || ua.includes('WebIntoApp') || (ua.includes('Android') && ua.includes('Version/')));
+    }
+
     function onYouTubeIframeAPIReady() {
       ytPlayer = new YT.Player('ytPlayer', {
         height: '200',
@@ -407,7 +393,6 @@
       }
     }
 
-    // Play Track
     function playTrack(id, title, artist, thumb) {
       const decTitle = decodeURIComponent(title);
       const decArtist = decodeURIComponent(artist);
@@ -433,7 +418,6 @@
         setPlaying(true);
       }
 
-      // Reset to artwork by default, then fetch fresh lyrics
       if (isLyricsActive) toggleLyricsMode();
       fetchLyrics(decTitle, decArtist);
       saveTrackToUserCloud(currentTrackPlaying, 'history');
@@ -465,8 +449,6 @@
         document.getElementById('canvasCurrentTime').innerText = fmt(cur);
         document.getElementById('canvasTotalTime').innerText = fmt(dur);
         if (dur > 0) document.getElementById('canvasSeekBar').value = (cur / dur) * 100;
-        
-        // Active Real-time Lyric Scroll Tracker
         syncLyricsScroll(cur);
       }, 350);
     }
@@ -484,7 +466,7 @@
       return `${m}:${sec < 10 ? '0' : ''}${sec}`;
     }
 
-    // ================= REAL-TIME LYRICS ENGINE =================
+    // LYRICS ENGINE
     function toggleLyricsMode() {
       const art = document.getElementById('artCard');
       const lyrics = document.getElementById('lyricsCard');
@@ -520,7 +502,6 @@
         const data = await res.json();
 
         if (data.syncedLyrics) {
-          // Parse LRC timestamp format [mm:ss.xx]
           syncedLyricLines = data.syncedLyrics.split('\n').map(line => {
             const m = line.match(/\[(\d+):(\d+\.?\d*)\](.*)/);
             if (m) {
@@ -560,12 +541,12 @@
       }
     }
 
-    // ================= PLAYLISTS MANAGEMENT =================
+    // PLAYLISTS ENGINE
     async function promptCreatePlaylist() {
       const name = prompt("Nayi Playlist ka Naam likhein:", "");
       if (!name || !name.trim()) return;
       await saveTrackToUserCloud(null, 'create_playlist', name.trim());
-      alert(`Playlist "${name.trim()}" create ho gayi!`);
+      alert(`Playlist "${name.trim()}" ban gayi!`);
     }
 
     function promptAddToPlaylist() {
@@ -601,9 +582,7 @@
           body: JSON.stringify({ email: currentUser.email, track, action, playlistName })
         });
         const json = await res.json();
-        if (json.userData) {
-          updateUserPlaylistsLocal(json.userData);
-        }
+        if (json.userData) updateUserPlaylistsLocal(json.userData);
       } catch(e) {
         console.error("Save error:", e);
       }
@@ -621,7 +600,6 @@
 
     function updateUserPlaylistsLocal(data) {
       userPlaylistsCache = data.playlists || {};
-
       document.getElementById('statHistoryCount').innerText = data.history?.length || 0;
       document.getElementById('statLikedCount').innerText = data.likedSongs?.length || 0;
       document.getElementById('statPlaylistCount').innerText = Object.keys(userPlaylistsCache).length;
@@ -670,7 +648,7 @@
     function openPlaylistView(name) {
       const tracks = userPlaylistsCache[name] || [];
       if (!tracks.length) {
-        alert(`Playlist "${name}" khali hai. Gaane ke screen se ➕ daba kar add karein.`);
+        alert(`Playlist "${name}" khali hai.`);
         return;
       }
       switchTab('library');
@@ -678,7 +656,7 @@
       playTrack(tracks[0].id, tracks[0].title, tracks[0].artist, tracks[0].thumbnail);
     }
 
-    // Tab Switching
+    // NAVIGATION TABS
     function switchTab(tabId) {
       ['home', 'search', 'library', 'profile'].forEach(t => {
         document.getElementById(`tab_${t}`).classList.toggle('tab-active', t === tabId);
@@ -689,7 +667,7 @@
       }
     }
 
-    // Google Auth Lifecycle
+    // AUTH LIFECYCLE (ANTI-WHITE SCREEN HYBRID)
     window.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => {
         const splash = document.getElementById('splashScreen');
@@ -700,39 +678,97 @@
           unlockApp(JSON.parse(saved));
         } else {
           document.getElementById('mandatoryAuthOverlay').classList.remove('hidden');
-          setupGoogleBtn();
+          setupLoginEngine();
         }
-      }, 2000);
+      }, 1500);
     });
 
-    function setupGoogleBtn() {
-      if (window.google && GOOGLE_CLIENT_ID !== "YOUR_CLIENT_ID_HERE") {
-        google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
-          callback: (r) => {
-            const p = JSON.parse(decodeURIComponent(atob(r.credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join('')));
-            const u = { name: p.name, email: p.email, picture: p.picture };
-            localStorage.setItem('kaiplay_google_user_session', JSON.stringify(u));
-            unlockApp(u);
+    function setupLoginEngine() {
+      const btnWrapper = document.getElementById("googleBtnWrapper");
+      if (!btnWrapper) return;
+
+      // Agar Android APK ke andar hai, freeze hone wala Google popup bypass karein
+      if (isAppWebView()) {
+        btnWrapper.innerHTML = `
+          <button onclick="directApkLogin()" class="flex items-center justify-center gap-3 bg-zinc-900 hover:bg-zinc-800 text-white border border-zinc-700 px-6 py-3 rounded-full text-xs font-bold w-full max-w-xs shadow-xl active:scale-95 transition">
+            <svg class="w-4 h-4" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+            Continue with Account
+          </button>
+        `;
+      } else {
+        // Desktop / Normal Chrome Browser
+        if (window.google && GOOGLE_CLIENT_ID && GOOGLE_CLIENT_ID !== "YOUR_CLIENT_ID_HERE") {
+          try {
+            google.accounts.id.initialize({
+              client_id: GOOGLE_CLIENT_ID,
+              callback: (r) => {
+                const p = JSON.parse(decodeURIComponent(atob(r.credential.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join('')));
+                const u = { name: p.name, email: p.email, picture: p.picture };
+                localStorage.setItem('kaiplay_google_user_session', JSON.stringify(u));
+                unlockApp(u);
+              }
+            });
+            google.accounts.id.renderButton(btnWrapper, { theme: "filled_black", size: "large", shape: "pill", width: 240 });
+          } catch(e) {
+            setupDirectFallbackBtn(btnWrapper);
           }
-        });
-        google.accounts.id.renderButton(document.getElementById("googleBtnWrapper"), { theme: "filled_black", size: "large", shape: "pill", width: 240 });
+        } else {
+          setupDirectFallbackBtn(btnWrapper);
+        }
       }
+    }
+
+    function setupDirectFallbackBtn(wrapper) {
+      wrapper.innerHTML = `
+        <button onclick="directApkLogin()" class="flex items-center justify-center gap-2 bg-[#e50914] text-white px-6 py-2.5 rounded-full text-xs font-bold w-full max-w-xs active:scale-95 transition">
+          Sign In / Enter KaiPlay
+        </button>
+      `;
+    }
+
+    function directApkLogin() {
+      const emailInput = prompt("Enter your Gmail address for Cloud Playlists:", "");
+      if (!emailInput || !emailInput.includes("@")) {
+        alert("Valid email required.");
+        return;
+      }
+      
+      const cleanName = emailInput.split("@")[0].replace(/[._]/g, " ");
+      const formattedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+
+      const user = {
+        name: formattedName,
+        email: emailInput.toLowerCase().trim(),
+        picture: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(formattedName)}&backgroundColor=e50914`
+      };
+
+      localStorage.setItem('kaiplay_google_user_session', JSON.stringify(user));
+      unlockApp(user);
     }
 
     function unlockApp(user) {
       currentUser = user;
-      document.getElementById('mandatoryAuthOverlay').classList.add('hidden');
+      const overlay = document.getElementById('mandatoryAuthOverlay');
+      if (overlay) overlay.classList.add('hidden');
+
       document.getElementById('welcomeUserName').innerText = user.name;
       document.getElementById('sidebarUserName').innerText = user.name;
       document.getElementById('tabProfileName').innerText = user.name;
       document.getElementById('tabProfileEmail').innerText = user.email;
+
       if (user.picture) {
         document.getElementById('sidebarUserPic').src = user.picture;
         document.getElementById('mobileUserPic').src = user.picture;
         document.getElementById('tabProfilePic').src = user.picture;
       }
-      syncUserDataFromServer(user.email);
+
+      switchTab('home');
+      if (user.email) syncUserDataFromServer(user.email);
       loadInitialShelves();
     }
 
@@ -741,7 +777,7 @@
       window.location.reload();
     }
 
-    // Auto Suggest & Search
+    // SEARCH & SHELVES
     function handleSuggest(val) {
       clearTimeout(suggestDebounce);
       const box = document.getElementById('suggestBox');
@@ -776,6 +812,7 @@
       const sec = document.getElementById('searchResultsSection');
       const grid = document.getElementById('searchResultsGrid');
       sec.classList.remove('hidden');
+      document.getElementById('searchResultsTitle').innerText = `Results for "${query}"`;
       grid.innerHTML = `<div class="col-span-full py-12 text-center text-zinc-500 text-xs">Searching tracks...</div>`;
 
       try {
@@ -783,7 +820,7 @@
         const tracks = await res.json();
         renderCardGrid(tracks, 'searchResultsGrid');
       } catch (e) {
-        grid.innerHTML = `<div class="col-span-full py-12 text-center text-red-500 text-xs">Error loading songs.</div>`;
+        grid.innerHTML = `<div class="col-span-full py-12 text-center text-red-500 text-xs">Error loading tracks.</div>`;
       }
     }
 
